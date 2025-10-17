@@ -151,7 +151,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button className="hover:bg-blue-50 hover:text-blue-800 hover:border-blue-200" variant="ghost" size="sm">
                   <User className="h-4 w-4 mr-2" />
                   Account
                 </Button>

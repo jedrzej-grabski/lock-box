@@ -9,6 +9,11 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   localstack:
     image: localstack/localstack:latest
@@ -18,21 +23,47 @@ services:
     ports:
       - "4566:4566"
     volumes:
-      - ./localstack/init:/etc/localstack/init:ro
+      - ./localstack/init:/etc/localstack/init/
       - ./localstack:/var/lib/localstack
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
     volumes:
       - ./backend:/app
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - S3_BUCKET=${S3_BUCKET}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/lockbox
+      - S3_BUCKET=lockbox-documents
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    command: pdm run start
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
 
 volumes:
   db-data:

@@ -1,11 +1,11 @@
 [project]
-name = "backend"
+name = "lock-box-backend"
 version = "0.1.0"
-description = "Default template for PDM package"
+description = "Backend for the LockBox app"
 authors = [
     {name = "jedrzej-grabski", email = "grabski.dev@gmail.com"},
 ]
-dependencies = ["uvicorn[standard]>=0.37.0", "fastapi>=0.119.0", "sqlalchemy>=2.0.44", "asyncpg>=0.30.0", "alembic>=1.17.0", "python-jose[cryptography]>=3.5.0", "passlib[argon2]>=1.7.4", "boto3>=1.40.54", "pydantic[email]>=2.12.2", "python-multipart>=0.0.20", "pydantic-extra-types>=2.10.6", "pydantic-settings>=2.11.0", "psycopg2>=2.9.11", "requests==2.29.0", "awscli>=1.42.54", "awscli-local>=0.22.2", "bcrypt>=5.0.0"]
+dependencies = ["uvicorn[standard]>=0.37.0", "fastapi>=0.119.0", "sqlalchemy>=2.0.44", "asyncpg>=0.30.0", "alembic>=1.17.0", "python-jose[cryptography]>=3.5.0", "passlib[argon2]>=1.7.4", "boto3>=1.40.54", "pydantic[email]>=2.12.2", "python-multipart>=0.0.20", "pydantic-extra-types>=2.10.6", "pydantic-settings>=2.11.0", "psycopg2-binary>=2.9.11", "requests==2.29.0", "awscli>=1.42.54", "awscli-local>=0.22.2", "bcrypt>=5.0.0"]
 requires-python = "==3.12.*"
 readme = "README.md"
 license = {text = "MIT"}
@@ -13,3 +13,8 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.scripts]
+migrate = {cmd = "python -m alembic upgrade head"}
+dev = {cmd = "uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload"}
+start = {composite = ["migrate", "dev"]}

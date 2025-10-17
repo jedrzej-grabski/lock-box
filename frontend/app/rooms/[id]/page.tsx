@@ -444,13 +444,13 @@ export default function RoomDetailPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handlePreview(doc)}>
+                          <Button className="hover:bg-green-50 hover:border-green-200 hover:text-green-600" variant="outline" size="sm" onClick={() => handlePreview(doc)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleDownload(doc)}>
                             <DownloadIcon className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(doc.id)}>
+                          <Button className="hover:bg-red-50 hover:border-red-200 hover:text-red-600" variant="outline" size="sm" onClick={() => handleDelete(doc.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -540,6 +540,7 @@ export default function RoomDetailPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
                                 onClick={() => handleRevokeInvite(invite.id)}
                                 disabled={fullyUsed}
                               >
@@ -611,7 +612,12 @@ export default function RoomDetailPage() {
                             </div>
                           </div>
                           {!share.revoked && share.role === "guest" && (
-                            <Button variant="outline" size="sm" onClick={() => handleRevokeAccess(share.user_id)}>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleRevokeAccess(share.user_id)}
+                              className="hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                            >
                               <UserX className="h-4 w-4" />
                             </Button>
                           )}
@@ -773,7 +779,7 @@ export default function RoomDetailPage() {
                   </label>
                 </div>
                 <div className="flex gap-3 justify-end">
-                  <Button variant="outline" onClick={() => setUploadDialogOpen(false)} disabled={isUploading}>
+                  <Button className="hover:bg-red-600" variant="outline" onClick={() => setUploadDialogOpen(false)} disabled={isUploading}>
                     Cancel
                   </Button>
                   <Button onClick={handleUpload} disabled={!selectedFile || isUploading}>
