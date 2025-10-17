@@ -32,6 +32,12 @@ app.add_middleware(
 )
 
 
+app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
+app.include_router(rooms.router, prefix="/api/v1", tags=["rooms"])
+app.include_router(documents.router, prefix="/api/v1", tags=["documents"])
+app.include_router(invites.router, prefix="/api/v1", tags=["invites"])
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
