@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,7 +21,19 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const { register } = useAuth()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirect")
+  const [redirectTo, setRedirectTo] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    const queryRedirect = searchParams.get("redirect")
+    if (queryRedirect) {
+      setRedirectTo(queryRedirect)
+      // keep it in storage in case the user navigates back/forth
+      sessionStorage.setItem("post_auth_redirect", queryRedirect)
+    } else {
+      const stored = sessionStorage.getItem("post_auth_redirect")
+      setRedirectTo(stored ?? undefined)
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +41,9 @@ export function RegisterForm() {
     setIsLoading(true)
 
     try {
-      await register(email, password, fullName, role, redirectTo || undefined)
+      await register(email, password, fullName, role, redirectTo)
+      // best-effort cleanup
+      sessionStorage.removeItem("post_auth_redirect")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed")
     } finally {

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +18,13 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirect")
+  const [redirectTo, setRedirectTo] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    const queryRedirect = searchParams.get("redirect")
+    const storedRedirect = sessionStorage.getItem("post_auth_redirect")
+    setRedirectTo(queryRedirect || storedRedirect || undefined)
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,13 +32,15 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      await login(email, password, redirectTo || undefined)
+      await login(email, password, redirectTo)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
     } finally {
       setIsLoading(false)
     }
   }
+
+  const registerLink = redirectTo ? `/register?redirect=${encodeURIComponent(redirectTo)}` : "/register"
 
   return (
     <Card className="w-full max-w-md">
@@ -72,7 +80,7 @@ export function LoginForm() {
         </form>
         <div className="mt-4 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link href="/register" className="text-foreground hover:underline font-medium">
+          <Link href={registerLink} className="text-foreground hover:underline font-medium">
             Create account
           </Link>
         </div>
