@@ -1,6 +1,62 @@
+version: "3.9"
+
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lockbox-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - lockbox-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lockbox-backend
+    volumes:
+      - ./backend/keys:/app/keys
+    environment:
+      ENV: production
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      API_PREFIX: /api/v1
+      FRONTEND_BASE: http://frontend:3000
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/lockbox
+      JWT_PRIVATE_KEY_PATH: /app/keys/jwt.private.pem
+      JWT_PUBLIC_KEY_PATH: /app/keys/jwt_public.pem
+      ACCESS_TOKEN_EXPIRES_MINUTES: 15
+      REFRESH_TOKEN_EXPIRES_DAYS: 7
+      JWT_ALGORITHM: RS256
+      JWT_ISSUER: securedataroom
+      INVITE_TOKEN_HMAC_SECRET: change-me
+      S3_ENDPOINT_URL: http://localstack:4566
+      S3_PUBLIC_ENDPOINT_URL: http://localhost:4566
+      S3_ACCESS_KEY_ID: test
+      S3_SECRET_ACCESS_KEY: test
+      S3_BUCKET: lockbox-bucket
+      S3_REGION: eu-central-1
+      EMAIL_FROM: no-reply@placeholder
+      PASSWORD_HASHING_SCHEME: argon2
+    depends_on:
+      db:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks:
+      - lockbox-net
+    ports:
+      - "8000:8000"
+
   db:
     image: postgres:15
+    container_name: lockbox-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -14,9 +70,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - lockbox-net
 
   localstack:
     image: localstack/localstack:latest
+    container_name: lockbox-localstack
     environment:
       - DEBUG=1
       - DOCKER_HOST=unix:///var/run/docker.sock
@@ -31,39 +90,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  backend:
-    build: ./backend
-    volumes:
-      - ./backend:/app
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/lockbox
-      - S3_BUCKET=lockbox-documents
-      - AWS_ENDPOINT_URL=http://localstack:4566
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
-    ports:
-      - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-      localstack:
-        condition: service_healthy
-    command: pdm run start
-
-  frontend:
-    build: ./frontend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    networks:
+      - lockbox-net
 
 volumes:
   db-data:
+
+networks:
+  lockbox-net:
+    driver: bridge

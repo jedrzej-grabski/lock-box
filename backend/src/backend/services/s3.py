@@ -11,15 +11,21 @@ logger = logging.getLogger(__name__)
 
 _session = boto3.Session()
 
-_s3_client = _session.client(
-    "s3",
-    region_name=settings.S3_REGION,
-    aws_access_key_id=settings.S3_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
-    endpoint_url=settings.S3_ENDPOINT_URL,
-    config=Config(signature_version="s3v4"),
-)
+def _build_s3_client(endpoint_url: str | None):
+    return _session.client(
+        "s3",
+        region_name=settings.S3_REGION,
+        aws_access_key_id=settings.S3_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY,
+        endpoint_url=endpoint_url,
+        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+    )
 
+_s3_client_internal = _build_s3_client(settings.S3_ENDPOINT_URL)
+
+_s3_client_public = _build_s3_client(
+    settings.S3_PUBLIC_ENDPOINT_URL
+)
 
 def generate_presigned_put_url(
     bucket_name: str,
@@ -28,7 +34,8 @@ def generate_presigned_put_url(
     extra_fields: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     try:
-        url = _s3_client.generate_presigned_url(
+        client = _s3_client_public or _s3_client_internal
+        url = client.generate_presigned_url(
             ClientMethod="put_object",
             Params={"Bucket": bucket_name, "Key": key},
             ExpiresIn=expires_in,
@@ -38,11 +45,11 @@ def generate_presigned_put_url(
         logger.exception("Failed to generate presigned PUT url")
         raise
 
-
 def generate_presigned_get_url(bucket_name: str, key: str, expires_in: int = 60) -> str:
     """Return a presigned GET URL for the object"""
     try:
-        url = _s3_client.generate_presigned_url(
+        client = _s3_client_public or _s3_client_internal
+        url = client.generate_presigned_url(
             ClientMethod="get_object",
             Params={"Bucket": bucket_name, "Key": key},
             ExpiresIn=expires_in,
@@ -52,13 +59,11 @@ def generate_presigned_get_url(bucket_name: str, key: str, expires_in: int = 60)
         logger.exception("Failed to generate presigned GET url")
         raise
 
-
 def head_object(bucket_name: str, key: str) -> dict[str, Any]:
     """Return head_object metadata (raises ClientError if not found)"""
-    resp = _s3_client.head_object(Bucket=bucket_name, Key=key)
+    resp = _s3_client_internal.head_object(Bucket=bucket_name, Key=key)
     return resp
-
 
 def delete_object(bucket_name: str, key: str) -> None:
     """Delete an object from S3 (raises ClientError if failure)"""
-    _s3_client.delete_object(Bucket=bucket_name, Key=key)
+    _s3_client_internal.delete_object(Bucket=bucket_name, Key=key)

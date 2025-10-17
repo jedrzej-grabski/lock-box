@@ -15,6 +15,6 @@ license = {text = "MIT"}
 distribution = false
 
 [tool.pdm.scripts]
-migrate = {cmd = "python -m alembic upgrade head"}
-dev = {cmd = "uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload"}
+migrate = "alembic upgrade head"
+dev = {cmd = "uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 --reload"}
 start = {composite = ["migrate", "dev"]}

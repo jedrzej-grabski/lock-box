@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY_ID: str = ""
     S3_SECRET_ACCESS_KEY: str = ""
     S3_ENDPOINT_URL: str | None = None
+    S3_PUBLIC_ENDPOINT_URL: str | None = None
 
     PASSWORD_HASHING_SCHEME: str = "argon2"
 
