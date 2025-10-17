@@ -1,21 +1,13 @@
-# src/backend/utils/dependencies.py
-"""
-Centralized FastAPI dependencies for authentication and access control.
-
-Uses existing JWT helper from src/backend/services/jwt.py.
-"""
-
 from typing import Optional
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timezone
 
-# Import project modules
 from src.backend.db import get_db
 from src.backend.models import User, DataRoom, Share
-from src.backend.services.jwt import verify_token  # <-- use your existing helper
+from src.backend.services.jwt import verify_token
 
 security = HTTPBearer(auto_error=False)
 
@@ -28,7 +20,7 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Missing authorization header")
 
     token = credentials.credentials
-    payload = verify_token(token)  # your helper returns payload or raises HTTPException
+    payload = verify_token(token)
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token payload")
